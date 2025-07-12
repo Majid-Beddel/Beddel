@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+python-multipart
+python-docx
+PyPDF2
+boto3
+jinja2
+pydantic
+httpx
+python-dotenv
+tqdm
+docxcompose
+google-generativeai
