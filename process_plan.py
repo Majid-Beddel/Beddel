@@ -10,8 +10,12 @@ model = genai.GenerativeModel("gemini-1.5-flash")
 LLM_PROMPT_FILE = "llm_prompt_template.txt"
 
 def get_llm_prompt_template():
-    with open(LLM_PROMPT_FILE, "r") as f:
-        return f.read()
+    try:
+        with open(LLM_PROMPT_FILE, "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        print(f"❌ Missing prompt file: {LLM_PROMPT_FILE}")
+        return ""
 
 def plan_from_llm(user_prompt):
     template = get_llm_prompt_template()
@@ -31,30 +35,30 @@ def plan_from_llm(user_prompt):
 def process_plan(plan, src_dir, out_dir):
     current_src_dir = src_dir
     results = []
-
+    
+    
     for idx, step in enumerate(plan):
         op = step["operation"]
         params = step.get("params", {})
-
+        
         print(f"\n⚙️ [{idx+1}/{len(plan)}] Executing '{op}' with params {params}...")
-
+        
+        
         try:
-            # Attempt to run the operation
             result = run_operation(op, current_src_dir, out_dir, params)
             results.append({op: result})
-
-            # Chain next operation on output dir
-            current_src_dir = out_dir
+            current_src_dir = out_dir  # chain next operation on output dir
             print(f"✅ Successfully completed '{op}'")
+            
         except Exception as e:
             print(f"❌ ERROR during '{op}': {type(e).__name__}: {e}")
             import traceback
             traceback.print_exc()
             results.append({op: "error"})
-            # Optional: Uncomment the next line to stop immediately on failure:
-            # break
+
 
     return results
+
 
 if __name__ == "__main__":
     print("🔧 Document Processor AI-Orchestrated CLI 🔧\n")
