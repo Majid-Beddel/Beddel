@@ -1,5 +1,5 @@
-import pathlib
 from docx import Document
+import pathlib
 import dateparser
 from datetime import datetime
 
@@ -99,7 +99,6 @@ def run_operation(operation_name, src_dir, out_dir, params):
 
     if operation_name == "date_range_validator":
         # ✅ Save results to DOCX report
-        from docx import Document  # Local import to avoid circular dependencies
         import re
         import os
 
@@ -180,6 +179,5 @@ def run_operation(operation_name, src_dir, out_dir, params):
         "files_processed": len(docx_files),
         "output_dir": str(out_path)
     }
-
 
 

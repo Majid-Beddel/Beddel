@@ -100,7 +100,7 @@ Important guidance:
 - If user describes multiple tasks, generate a JSON array where each task is an element in execution order.
 - Do not include any prose, explanation, or comments.
 - If converting to PDF, use "use_word": false unless the user explicitly asks to use Microsoft Word.
- 
+
 ---
 
 Example user request:
