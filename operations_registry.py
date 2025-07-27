@@ -17,7 +17,6 @@ from operations import (
     format_document,
     table_cleanup,
     extract_sections
-
 )
 
 # 🔧 Registry of available operations
@@ -62,7 +61,7 @@ AVAILABLE_OPERATIONS = {
         "description": "Check if dates are within a given range",
         "func": date_range_validator.process
     },
-      "format_document": {
+    "format_document": {
         "description": "Adjust layout: align text, tables, resize images",
         "func": format_document.process
     },
@@ -74,8 +73,6 @@ AVAILABLE_OPERATIONS = {
         "description": "Extract a specific section by heading (e.g. About, Experience)",
         "func": extract_sections.process
     }
-
-
 }
 
 # 🔧 Shared utility used by process_plan.py:
@@ -96,9 +93,7 @@ def run_operation(operation_name, src_dir, out_dir, params):
         return {"status": "success", "output": str(out_file)}
 
     if operation_name == "date_range_validator":
-        # ✅ Save results to DOCX report
         import re
-        import os
 
         date_pattern = r"(\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b|\b\w+ \d{4}\b|\b\d{4}-\d{2}-\d{2}\b)"
         start = datetime.strptime(params.get("start_date"), "%Y-%m-%d")
@@ -116,9 +111,8 @@ def run_operation(operation_name, src_dir, out_dir, params):
                 matches = re.findall(date_pattern, para.text)
                 for match in matches:
                     parsed = dateparser.parse(match)
-                    if parsed:
-                        if parsed.date() < start.date() or parsed.date() > end.date():
-                            out_of_range.append((match, parsed.date()))
+                    if parsed and (parsed.date() < start.date() or parsed.date() > end.date()):
+                        out_of_range.append((match, parsed.date()))
 
             if out_of_range:
                 for match, parsed_date in out_of_range:
@@ -163,12 +157,8 @@ def run_operation(operation_name, src_dir, out_dir, params):
                 **params
             )
         else:
-            op_func(
-                doc,
-                input_path=file_path,
-                out_dir=out_path,
-                **params
-            )
+            # ✅ FIXED: Only passing doc and params to avoid unexpected keyword errors
+            op_func(doc, **params)
             out_file = out_path / file_path.name
             doc.save(out_file)
 
@@ -177,5 +167,3 @@ def run_operation(operation_name, src_dir, out_dir, params):
         "files_processed": len(docx_files),
         "output_dir": str(out_path)
     }
-
-
