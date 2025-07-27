@@ -1,9 +1,18 @@
+import os
 import json
+from dotenv import load_dotenv
 import google.generativeai as genai
-from keys import gemini_api_key
 
+# Load .env file
+load_dotenv()
+
+# Access the Gemini API key
+gemini_api_key = os.getenv("GEMINI_API_KEY")
+
+# Configure the Gemini model
 genai.configure(api_key=gemini_api_key)
 model = genai.GenerativeModel("gemini-1.5-flash")
+
 
 def load_prompt_template():
     with open("llm_prompt_template.txt", "r", encoding="utf-8") as f:

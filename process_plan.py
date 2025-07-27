@@ -1,11 +1,20 @@
+import os
 import pathlib
 import json
-from operations_registry import run_operation
+from dotenv import load_dotenv
 import google.generativeai as genai
-from keys import gemini_api_key
+from operations_registry import run_operation
 
-genai.configure(api_key=gemini_api_key)  # Replace with your actual API key.
+# Load environment variables from .env
+load_dotenv()
+
+# Retrieve Gemini API key
+gemini_api_key = os.getenv("GEMINI_API_KEY")
+
+# Configure Gemini API
+genai.configure(api_key=gemini_api_key)
 model = genai.GenerativeModel("gemini-1.5-flash")
+
 
 LLM_PROMPT_FILE = "llm_prompt_template.txt"
 

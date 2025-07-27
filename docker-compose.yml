@@ -1,0 +1,18 @@
+services:
+  backend:
+    build: .
+    container_name: beddel-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+
+  frontend:
+    build: ./beddel-ui
+    container_name: beddel-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
