@@ -1,8 +1,11 @@
-# operations/format_specific_words.py
-
+from docx import Document
 from docx.shared import Pt, RGBColor
+from pathlib import Path
+import shutil
 
-def process(doc, keyword=None, font_name=None, font_size=None, bold=None, italic=None, underline=None, color=None):
+def process(input_path, output_path, keyword=None, font_name=None, font_size=None, bold=None, italic=None, underline=None, color=None, redline=False):
+    doc = Document(input_path)
+
     if not keyword:
         return
 
@@ -20,20 +23,17 @@ def process(doc, keyword=None, font_name=None, font_size=None, bold=None, italic
             while idx < len(text):
                 match_idx = text_lower.find(keyword_lower, idx)
                 if match_idx == -1:
-                    # No more matches, add remainder as normal run
                     remainder = text[idx:]
                     if remainder:
                         new_run = paragraph.add_run(remainder)
                         new_runs.append(new_run)
                     break
                 else:
-                    # Add text before match
                     if match_idx > idx:
                         before = text[idx:match_idx]
                         new_run = paragraph.add_run(before)
                         new_runs.append(new_run)
 
-                    # Add matched keyword with formatting
                     matched = text[match_idx:match_idx + keyword_len]
                     keyword_run = paragraph.add_run(matched)
 
@@ -53,11 +53,15 @@ def process(doc, keyword=None, font_name=None, font_size=None, bold=None, italic
                     new_runs.append(keyword_run)
                     idx = match_idx + keyword_len
 
-        # After building all new runs, remove old runs
         for old_run in paragraph.runs:
             p = old_run._element
             p.getparent().remove(p)
 
-        # Add new runs back in order
         for r in new_runs:
             paragraph._element.append(r._element)
+
+    doc.save(output_path)
+
+    if redline:
+        output_path_obj = Path(output_path)
+        shutil.copy(output_path_obj, output_path_obj.parent / "redline_summary_output.docx")

@@ -3,8 +3,6 @@ import pathlib
 import dateparser
 from datetime import datetime
 
-
-
 from operations import (
     bulk_replace,
     format_headers,
@@ -19,7 +17,6 @@ from operations import (
     format_document,
     table_cleanup,
     extract_sections
-
 )
 
 # 🔧 Registry of available operations
@@ -60,11 +57,11 @@ AVAILABLE_OPERATIONS = {
         "description": "Convert DOCX files to PDF",
         "func": convert_to_pdf.process
     },
-    "date_range_validator": {  
+    "date_range_validator": {
         "description": "Check if dates are within a given range",
         "func": date_range_validator.process
     },
-      "format_document": {
+    "format_document": {
         "description": "Adjust layout: align text, tables, resize images",
         "func": format_document.process
     },
@@ -76,8 +73,6 @@ AVAILABLE_OPERATIONS = {
         "description": "Extract a specific section by heading (e.g. About, Experience)",
         "func": extract_sections.process
     }
-
-
 }
 
 # 🔧 Shared utility used by process_plan.py:
@@ -98,10 +93,7 @@ def run_operation(operation_name, src_dir, out_dir, params):
         return {"status": "success", "output": str(out_file)}
 
     if operation_name == "date_range_validator":
-        # ✅ Save results to DOCX report
         import re
-        import os
-
         date_pattern = r"(\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b|\b\w+ \d{4}\b|\b\d{4}-\d{2}-\d{2}\b)"
         start = datetime.strptime(params.get("start_date"), "%Y-%m-%d")
         end = datetime.strptime(params.get("end_date"), "%Y-%m-%d")
@@ -147,37 +139,35 @@ def run_operation(operation_name, src_dir, out_dir, params):
     op_func = AVAILABLE_OPERATIONS[operation_name]["func"]
 
     for file_path in docx_files:
-        doc = Document(file_path)
+        output_path = out_path / file_path.name
+
+        # Remove conflicting args from params if present
+        clean_params = params.copy()
+        clean_params.pop("input_path", None)
+        clean_params.pop("output_path", None)
 
         if operation_name == "convert_to_pdf":
             output_path = out_path / file_path.with_suffix(".pdf").name
             op_func(
-                doc,
                 input_path=file_path,
                 output_path=output_path,
-                use_word=params.get("use_word", False)
+                use_word=clean_params.get("use_word", False)
             )
         elif operation_name == "extract_sections":
             op_func(
-                doc,
                 input_path=file_path,
                 out_dir=out_path,
-                **params
+                **clean_params
             )
         else:
             op_func(
-                doc,
                 input_path=file_path,
-                out_dir=out_path,
-                **params
+                output_path=output_path,
+                **clean_params
             )
-            out_file = out_path / file_path.name
-            doc.save(out_file)
 
     return {
         "status": "success",
         "files_processed": len(docx_files),
         "output_dir": str(out_path)
     }
-
-
