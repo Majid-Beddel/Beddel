@@ -14,7 +14,7 @@ Ensure the following software is installed on your machine:
 
 - **Python 3.10+**  
   👉 Download: [https://www.python.org/downloads/](https://www.python.org/downloads/)
-
+ 
 - **Node.js + npm** (for frontend)  
   👉 Download: [https://nodejs.org/](https://nodejs.org/)
 
