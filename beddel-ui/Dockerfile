@@ -18,3 +18,5 @@ EXPOSE 3000
 
 # Start the dev server (or use `next start` if pre-built)
 CMD ["npm", "run", "dev"]
+
+
