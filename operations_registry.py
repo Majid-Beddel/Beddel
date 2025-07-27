@@ -3,8 +3,6 @@ import pathlib
 import dateparser
 from datetime import datetime
 
-
-
 from operations import (
     bulk_replace,
     format_headers,

@@ -1,10 +1,14 @@
 import pathlib
 import json
+import os
+from dotenv import load_dotenv
 from operations_registry import run_operation
 import google.generativeai as genai
-from keys import gemini_api_key
 
-genai.configure(api_key=gemini_api_key)  # Replace with your actual API key.
+# ✅ Load GEMINI_API_KEY from .env file
+load_dotenv()
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+
 model = genai.GenerativeModel("gemini-1.5-flash")
 
 LLM_PROMPT_FILE = "llm_prompt_template.txt"
@@ -36,26 +40,22 @@ def process_plan(plan, src_dir, out_dir):
     current_src_dir = src_dir
     results = []
 
-
     for idx, step in enumerate(plan):
         op = step["operation"]
         params = step.get("params", {})
 
         print(f"\n⚙️ [{idx+1}/{len(plan)}] Executing '{op}' with params {params}...")
 
-
         try:
             result = run_operation(op, current_src_dir, out_dir, params)
             results.append({op: result})
-            current_src_dir = out_dir  # chain next operation on output dir
+            current_src_dir = out_dir
             print(f"✅ Successfully completed '{op}'")
-
         except Exception as e:
             print(f"❌ ERROR during '{op}': {type(e).__name__}: {e}")
             import traceback
             traceback.print_exc()
             results.append({op: "error"})
-
 
     return results
 
