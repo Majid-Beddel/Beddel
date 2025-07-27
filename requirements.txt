@@ -11,3 +11,7 @@ python-dotenv
 tqdm
 docxcompose
 google-generativeai
+language-tool-python
+python-dateutil
+docx2pdf
+pypandoc
