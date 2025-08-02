@@ -86,7 +86,15 @@ Example regex patterns:
 - target_heading: string — name of the heading to extract (e.g., "About", "Experience")
 - Extracts all paragraphs under the specified heading (e.g., "About") and saves the result as a .txt file in the output folder.
 
+1️⃣4️⃣ regex_replace:
+pattern: regex pattern as a string to identify what to replace
 
+repl: replacement string
+
+redline (optional): true / false
+
+This operation replaces all text matching the pattern with the provided replacement string.
+Use it when the user wants to perform custom regex-based substitutions, such as replacing version numbers, dates, or other structured patterns.
 
 
 Example uses:
@@ -186,6 +194,68 @@ Example response:
     "operation": "extract_sections",
     "params": {
       "target_heading": "About"
+    }
+  }
+]
+
+Example user request:
+"Redact all UK phone numbers and show changes in red"
+
+Example response:
+
+[
+  {
+    "operation": "redact",
+    "params": {
+      "pattern": "(\\+44\\s?7\\d{3}|\\(?07\\d{3}\\)?)\\s?\\d{3}\\s?\\d{3}",
+      "redline": true
+    }
+  }
+]
+
+Example user request:
+Replace all version numbers like v1.0 with 'Latest Version' and show changes in red
+
+Example response:
+
+[
+  {
+    "operation": "regex_replace",
+    "params": {
+      "pattern": "v\\d+\\.\\d+",
+      "repl": "Latest Version",
+      "redline": true
+    }
+  }
+]
+
+
+
+🆕 Redline Support:
+
+Some operations support an optional `"redline": true` parameter.  
+If the user asks to “track changes”, “highlight replacements”, “show modifications”, or “generate a redline copy”, include `"redline": true` in that operation’s `params`.
+
+✅ Supported operations:
+- bulk_replace
+- format_specific_words
+- format_regex_matches
+- regex_replace
+- update_footers
+- table_cleanup
+
+Example user request:  
+"Replace 'client' with 'partner' and show all changes in red"
+
+Example response:
+
+[
+  {
+    "operation": "bulk_replace",
+    "params": {
+      "find": "client",
+      "repl": "partner",
+      "redline": true
     }
   }
 ]

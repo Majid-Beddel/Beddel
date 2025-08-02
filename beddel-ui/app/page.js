@@ -7,8 +7,7 @@ export default function Home() {
   const [files, setFiles] = useState([]);
   const [prompt, setPrompt] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [resultUrl, setResultUrl] = useState({ url: null, filename: "processed.docx" });
-
+  const [resultUrl, setResultUrl] = useState({ url: null, filename: "processed_documents.zip" });
 
   const { getRootProps, getInputProps } = useDropzone({
     accept: { "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [] },
@@ -16,40 +15,37 @@ export default function Home() {
   });
 
   const handleSubmit = async () => {
-  setIsSubmitting(true);
-  const formData = new FormData();
-  formData.append("user_prompt", prompt);
-  files.forEach(file => formData.append("files", file));
+    setIsSubmitting(true);
+    const formData = new FormData();
+    formData.append("user_prompt", prompt);
+    files.forEach(file => formData.append("files", file));
 
-  const res = await fetch("http://localhost:8000/process", {
-    method: "POST",
-    body: formData
-  });
+    try {
+      const res = await fetch("http://localhost:8000/process", {
+        method: "POST",
+        body: formData
+      });
 
-  const contentDisposition = res.headers.get("Content-Disposition");
-  const contentType = res.headers.get("Content-Type");
+      if (!res.ok) {
+        throw new Error("Failed to process documents.");
+      }
 
-  let suggestedFilename = "processed.docx"; // default fallback
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
 
-  if (contentDisposition) {
-    const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
-    if (filenameMatch && filenameMatch[1]) {
-      suggestedFilename = filenameMatch[1];
+      setResultUrl({ url, filename: "processed_documents.zip" });
+    } catch (err) {
+      console.error("❌ Error:", err);
+      alert("Something went wrong while processing the documents.");
+    } finally {
+      setIsSubmitting(false);
     }
-  } else if (contentType === "application/pdf") {
-    suggestedFilename = "processed.pdf";
-  }
-
-  const blob = await res.blob();
-  const url = window.URL.createObjectURL(blob);
-  setResultUrl({ url, filename: suggestedFilename });
-  setIsSubmitting(false);
-};
-
+  };
 
   return (
     <main className="p-8 max-w-xl mx-auto text-center space-y-4">
       <h1 className="text-3xl font-bold">Beddel</h1>
+
       <textarea
         placeholder="Please describe your changes here"
         className="border rounded w-full p-2"
@@ -57,15 +53,18 @@ export default function Home() {
         value={prompt}
         onChange={e => setPrompt(e.target.value)}
       />
+
       <div {...getRootProps()} className="border-dashed border-2 rounded p-8 cursor-pointer">
         <input {...getInputProps()} />
         <p>Drag and drop files here, or click to browse</p>
       </div>
+
       <div className="space-y-2">
         {files.map(f => (
           <div key={f.name} className="text-sm">{f.name}</div>
         ))}
       </div>
+
       <button
         onClick={handleSubmit}
         disabled={isSubmitting}
@@ -73,14 +72,18 @@ export default function Home() {
       >
         {isSubmitting ? "Processing..." : "Submit"}
       </button>
+
       {resultUrl.url && (
         <div className="mt-4">
-          <a href={resultUrl.url} download={resultUrl.filename} className="text-blue-600 underline">
-            Download your processed document
-            </a>
-          </div>
-        )}
-
+          <a
+            href={resultUrl.url}
+            download={resultUrl.filename}
+            className="text-blue-600 underline"
+          >
+            Download all processed documents (ZIP)
+          </a>
+        </div>
+      )}
     </main>
   );
 }

@@ -1,9 +1,11 @@
+# main.py
+
 from fastapi import FastAPI, UploadFile, File, Form
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 from io import BytesIO
-import os
+import zipfile
 
 from get_plan_from_gemini import plan_from_llm
 from process_plan import process_plan
@@ -13,7 +15,7 @@ app = FastAPI()
 # Allow CORS for local frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Update in production
+    allow_origins=["http://localhost:3000"],  # Update for production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -48,7 +50,6 @@ async def process_files(
         )
     else:
         zip_buf = BytesIO()
-        import zipfile
         with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as zipf:
             for filename, buf in all_outputs:
                 buf.seek(0)
