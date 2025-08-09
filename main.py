@@ -6,8 +6,8 @@ import io
 import zipfile
 from docx import Document
 
-from process_plan import process_plan
-from get_plan_from_gemini import plan_from_llm
+from utilities.executor import process_plan
+from utilities.planner import plan_from_llm
 
 app = FastAPI()
 

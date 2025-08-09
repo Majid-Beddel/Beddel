@@ -8,9 +8,9 @@ load_dotenv()
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 model = genai.GenerativeModel("gemini-2.5-flash")
-LLM_PROMPT_FILE = "llm_prompt_template.txt"
+LLM_PROMPT_FILE = "utilities/llm_prompt.txt"
 
-def get_llm_prompt_template():
+def get_llm_prompt():
     try:
         with open(LLM_PROMPT_FILE, "r", encoding="utf-8") as f:
             return f.read()
@@ -19,7 +19,7 @@ def get_llm_prompt_template():
         return ""
 
 async def plan_from_llm(user_prompt: str):
-    template = get_llm_prompt_template()
+    template = get_llm_prompt()
     full_prompt = template + f"\n\nUser request: {user_prompt}"
 
     try:
