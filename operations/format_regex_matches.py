@@ -1,19 +1,43 @@
 import re
+from docx import Document
 from docx.shared import Pt, RGBColor
+from pathlib import Path
 
-def process(doc, pattern, font_name=None, font_size=None, bold=None, italic=None, underline=None, color=None):
-    print(f"📝 DEBUG: Running format_regex_matches")
-    print(f"    Pattern: {pattern}")
-    print(f"    Font name: {font_name}")
-    print(f"    Font size: {font_size}")
-    print(f"    Bold: {bold}")
-    print(f"    Italic: {italic}")
-    print(f"    Underline: {underline}")
-    print(f"    Color: {color}")
+def process(input_path, output_path, pattern=None, font_name=None, font_size=None,
+            bold=None, italic=None, underline=None, color=None, redline=False):
+    if not pattern:
+        return
 
     regex = re.compile(pattern)
+    match_count = 0
 
-    def format_run(run):
+    # Map known patterns to friendly descriptions
+    pattern_descriptions = {
+        r"(\+44\s?7\d{3}|\(?07\d{3}\)?)\s?\d{3}\s?\d{3}": "UK phone number",
+        # Add more here as needed
+    }
+    pattern_label = pattern_descriptions.get(pattern, f"pattern: '{pattern}'")
+
+    def format_match_text(paragraph, text, match_spans, formatting_fn):
+        runs = []
+        idx = 0
+        for start, end in match_spans:
+            if start > idx:
+                runs.append((text[idx:start], False))
+            runs.append((text[start:end], True))
+            idx = end
+        if idx < len(text):
+            runs.append((text[idx:], False))
+
+        paragraph.clear()
+        for part, is_match in runs:
+            run = paragraph.add_run(part)
+            if is_match:
+                formatting_fn(run)
+
+    def apply_formatting(run):
+        nonlocal match_count
+        match_count += 1
         if font_name:
             run.font.name = font_name
         if font_size:
@@ -25,26 +49,42 @@ def process(doc, pattern, font_name=None, font_size=None, bold=None, italic=None
         if underline is not None:
             run.font.underline = underline
         if color:
-            try:
-                rgb = RGBColor(*color)
-                run.font.color.rgb = rgb
-                print(f"    ✔️ Applied color {color} to run: '{run.text}'")
-            except Exception as e:
-                print(f"    ⚠️ ERROR applying color to run '{run.text}': {e}")
+            run.font.color.rgb = RGBColor(*color)
 
-    # Apply formatting in paragraphs
+    def apply_redline(run):
+        nonlocal match_count
+        match_count += 1
+        run.font.bold = True
+        run.font.color.rgb = RGBColor(255, 0, 0)
+
+    # Main document formatting
+    doc = Document(input_path)
     for para in doc.paragraphs:
-        for run in para.runs:
-            if regex.search(run.text):
-                print(f"✔️ Match found in paragraph run: '{run.text}'")
-                format_run(run)
+        text = para.text
+        matches = list(regex.finditer(text))
+        if matches:
+            spans = [(m.start(), m.end()) for m in matches]
+            format_match_text(para, text, spans, apply_formatting)
 
-    # Apply formatting in tables
-    for table in doc.tables:
-        for row in table.rows:
-            for cell in row.cells:
-                for para in cell.paragraphs:
-                    for run in para.runs:
-                        if regex.search(run.text):
-                            print(f"✔️ Match found in table cell run: '{run.text}'")
-                            format_run(run)
+    doc.save(output_path)
+
+    # Redline version
+    if redline:
+        redline_path = Path(output_path).parent / f"redline_{Path(output_path).name}"
+        red_doc = Document(input_path)
+        redline_count = 0  # Independent count
+
+        for para in red_doc.paragraphs:
+            text = para.text
+            matches = list(regex.finditer(text))
+            if matches:
+                spans = [(m.start(), m.end()) for m in matches]
+                format_match_text(para, text, spans, apply_redline)
+                redline_count += len(matches)
+
+        # Friendly summary at the top
+        summary_text = f"🔄 Redline Summary:\nFormatted {redline_count} match(es) for {pattern_label}"
+        first_para = red_doc.paragraphs[0]
+        first_para.insert_paragraph_before(summary_text)
+
+        red_doc.save(redline_path)

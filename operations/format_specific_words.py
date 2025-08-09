@@ -1,6 +1,13 @@
 # operations/format_specific_words.py
 
 from docx.shared import Pt, RGBColor
+<<<<<<< HEAD
+=======
+from pathlib import Path
+
+def process(input_path, output_path, keyword=None, font_name=None, font_size=None, bold=None, italic=None, underline=None, color=None, redline=False):
+    doc = Document(input_path)
+>>>>>>> 2741e0a (Redline feature complete: regex_replace, table_cleanup, etc.)
 
 def process(doc, keyword=None, font_name=None, font_size=None, bold=None, italic=None, underline=None, color=None):
     if not keyword:
@@ -8,6 +15,7 @@ def process(doc, keyword=None, font_name=None, font_size=None, bold=None, italic
 
     keyword_lower = keyword.lower()
     keyword_len = len(keyword)
+    count = 0  # Count number of keyword matches
 
     for paragraph in doc.paragraphs:
         new_runs = []
@@ -51,6 +59,7 @@ def process(doc, keyword=None, font_name=None, font_size=None, bold=None, italic
                         keyword_run.font.color.rgb = RGBColor(*color)
 
                     new_runs.append(keyword_run)
+                    count += 1
                     idx = match_idx + keyword_len
 
         # After building all new runs, remove old runs
@@ -61,3 +70,38 @@ def process(doc, keyword=None, font_name=None, font_size=None, bold=None, italic
         # Add new runs back in order
         for r in new_runs:
             paragraph._element.append(r._element)
+<<<<<<< HEAD
+=======
+
+    doc.save(output_path)
+
+    # ✅ Redline logic
+    if redline:
+        output_path_obj = Path(output_path)
+        redline_path = output_path_obj.parent / f"redline_{output_path_obj.name}"
+
+        redline_doc = Document(output_path)
+
+        # Redline formatting pass (same text, but force red + bold)
+        for para in redline_doc.paragraphs:
+            for run in para.runs:
+                if keyword_lower in run.text.lower():
+                    run.font.bold = True
+                    run.font.color.rgb = RGBColor(255, 0, 0)
+
+        # Add summary paragraph at the very top via XML
+        summary_text = f"🔄 Redline Summary:\nFormatted keyword '{keyword}' {count} time(s)"
+        if bold is not None:
+            summary_text += f" with bold={bold}"
+        if italic is not None:
+            summary_text += f", italic={italic}"
+        if underline is not None:
+            summary_text += f", underline={underline}"
+        if color:
+            summary_text += f", color=RGB{tuple(color)}"
+
+        para = redline_doc.add_paragraph(summary_text)
+        redline_doc._body._element.insert(0, para._element)
+
+        redline_doc.save(redline_path)
+>>>>>>> 2741e0a (Redline feature complete: regex_replace, table_cleanup, etc.)
