@@ -1,37 +1,35 @@
-# process_plan.py
-from docx import Document
 from io import BytesIO
+from docx import Document
 from operations_registry import run_operation
 
-def process_plan(plan, uploaded_files):
-    results = []
+def process_plan(plan, memory_files: dict) -> tuple:
     processed_outputs = []
+    results = []
 
-    for file in uploaded_files:
-        file.file.seek(0)
-        doc = Document(file.file)
-        original_filename = file.filename
-
-        print(f"📄 Processing file: {original_filename}")
-
+    for file_name, input_buffer in memory_files.items():
         try:
+            print(f"📄 Processing file: {file_name}")
+            doc = Document(input_buffer)
+
             for idx, step in enumerate(plan):
                 op = step["operation"]
                 params = step.get("params", {})
                 print(f"⚙️  [{idx+1}/{len(plan)}] Executing '{op}' with params {params}...")
-                run_operation(op, doc, params)
+                result = run_operation(op, doc, params)
+                if result.get("status") == "error":
+                    raise Exception(result["message"])
 
-            # Save final doc to memory
-            output_stream = BytesIO()
-            doc.save(output_stream)
-            output_stream.seek(0)
-            processed_outputs.append((original_filename, output_stream))
-            results.append({original_filename: "success"})
+            # Save processed file to memory
+            output_buffer = BytesIO()
+            doc.save(output_buffer)
+            output_buffer.seek(0)
+
+            processed_outputs.append((file_name, output_buffer))
+            results.append({file_name: "success"})
 
         except Exception as e:
-            print(f"❌ Error processing {original_filename}: {type(e).__name__}: {e}")
-            import traceback
-            traceback.print_exc()
-            results.append({original_filename: "error"})
+            print(f"❌ Error during '{op}': {e}")
+            processed_outputs.append((file_name, None))
+            results.append({file_name: "error"})
 
     return processed_outputs, results
