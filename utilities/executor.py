@@ -1,6 +1,6 @@
 from io import BytesIO
 from docx import Document
-from operations_registry import run_operation
+from utilities.operations_registry import run_operation
 
 def process_plan(plan, memory_files: dict) -> tuple:
     processed_outputs = []
